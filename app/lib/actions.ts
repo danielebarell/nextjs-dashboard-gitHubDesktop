@@ -17,7 +17,6 @@ const formDataInvoiceSchema = InvoiceSchema.omit({ id: true, date: true });
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: "require" });
 //
 export async function updateInvoiceAction(id: string, formData: FormData) {
-  console.log("updateInvoiceAction", formData.get("amount"));
   const partialData = {
     customer_id: formData.get("customerId"),
     amount: formData.get("amount") || "0",
@@ -26,14 +25,18 @@ export async function updateInvoiceAction(id: string, formData: FormData) {
   const validatedData = formDataInvoiceSchema.parse(partialData);
   validatedData.amount *= 100;
   const { customer_id, amount, status } = validatedData;
-  await sql`
+  try {
+    await sql`
   UPDATE invoices
 SET customer_id = ${customer_id}, amount = ${amount}, status = ${status}
 WHERE id = ${id}
 `;
-  //
+  } catch (err) {
+    console.error((err as Error).message);
+  }
   revalidatePath(redirectURL); //remove cash so invoices page will be refreshed
   redirect(redirectURL);
+  //
 }
 //
 export async function createInvoiceAction(formData: FormData) {
@@ -42,12 +45,12 @@ export async function createInvoiceAction(formData: FormData) {
     amount: formData.get("amount") || "0",
     status: formData.get("status")?.toString(),
   };
+  //zod, validate data
+  const validatedData = formDataInvoiceSchema.parse(partialData);
+  validatedData.amount = validatedData.amount * 100;
+  const { customer_id, amount, status } = validatedData;
+  const date = new Date().toISOString().split("T")[0]; //"2011-10-05T14:48:00.000Z" -> "2011-10-05
   try {
-    //zod, validate data
-    const validatedData = formDataInvoiceSchema.parse(partialData);
-    validatedData.amount = validatedData.amount * 100;
-    const { customer_id, amount, status } = validatedData;
-    const date = new Date().toISOString().split("T")[0]; //"2011-10-05T14:48:00.000Z" -> "2011-10-05
     await sql`INSERT INTO invoices 
     (customer_id, amount, status, date) 
     VALUES (${customer_id},${amount}, ${status}, ${date})
@@ -58,20 +61,25 @@ export async function createInvoiceAction(formData: FormData) {
     } else {
       console.error("Errore nella registrazione dati", err);
     }
-  } finally {
-    revalidatePath(redirectURL); //remove cash so invoices page will be refreshed
-    redirect(redirectURL);
   }
+  revalidatePath(redirectURL); //remove cash so invoices page will be refreshed
+  redirect(redirectURL);
 }
-export async function deleteInvoiceAction(id: string) {
+/* export async function deleteInvoiceAction(id: string) {
   try {
     await sql`DELETE FROM invoices
   WHERE id=${id}
   `;
   } catch (err) {
     console.error((err as Error).message);
-  } finally {
-    revalidatePath(redirectURL); //remove cash so invoices page will be refreshed
-    redirect(redirectURL);
   }
+  revalidatePath(redirectURL); //remove cash so invoices page will be refreshed
+  redirect(redirectURL);
+} */
+export async function deleteInvoiceAction(id: string) {
+  throw new Error("No deletion :P");
+  await sql`DELETE FROM invoices
+  WHERE id=${id}
+  `;
+  revalidatePath(redirectURL); //remove cash so invoices page will be refreshed
 }

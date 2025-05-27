@@ -1,5 +1,6 @@
 import Breadcrumbs from "@/app/ui/invoices/breadcrumbs";
 import Form from "@/app/ui/invoices/edit-form";
+import { notFound } from "next/navigation";
 import { fetchCustomers, fetchInvoiceById } from "@/app/lib/data";
 
 export default async function InvoiceEditPage({
@@ -15,6 +16,9 @@ export default async function InvoiceEditPage({
     fetchCustomers(),
     fetchInvoiceById(id),
   ]);
+  if (!invoice) {
+    notFound();
+  }
   return (
     <>
       <Breadcrumbs
