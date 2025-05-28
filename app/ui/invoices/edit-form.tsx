@@ -9,7 +9,8 @@ import {
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { Button } from "@/app/ui/button";
-import { updateInvoiceAction } from "@/app/lib/actions";
+import { updateInvoiceAction, State } from "@/app/lib/actions";
+import { useActionState } from "react";
 
 export default function EditInvoiceForm({
   invoice,
@@ -18,11 +19,18 @@ export default function EditInvoiceForm({
   invoice: InvoiceForm;
   customers: CustomerField[];
 }) {
-  const updateInvoiceActionHandler = (formData: FormData) => {
-    updateInvoiceAction(invoice.id, formData);
-  };
+  const initialState: State = { message: null, errors: {} };
+  async function updateInvoice(prevState: State, formData: FormData) {
+    const state = await updateInvoiceAction(invoice.id, formData);
+    return state;
+  }
+  const [formState, formAction] = useActionState(updateInvoice, initialState);
+
+  /*  const updateInvoiceActionHandler = (formData: FormData) => {
+    (invoice.id, formData);
+  }; */
   return (
-    <form action={updateInvoiceActionHandler}>
+    <form action={formAction}>
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         {/* Customer Name */}
         <div className="mb-4">
@@ -67,6 +75,12 @@ export default function EditInvoiceForm({
               />
               <CurrencyDollarIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />
             </div>
+            <ul>
+              {formState.errors?.amount &&
+                formState.errors.amount.map((error) => (
+                  <li className="text-red-500 text-sm">{error}</li>
+                ))}
+            </ul>
           </div>
         </div>
 
