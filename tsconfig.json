@@ -30,7 +30,8 @@
     ".next/types/**/*.ts",
     "app/lib/placeholder-data.ts",
     "scripts/seed.js",
-    "app/dashboard/invoices/error.tsx"
+    "app/dashboard/invoices/error.tsx",
+    "auth.ts"
   ],
   "exclude": ["node_modules"]
 }
